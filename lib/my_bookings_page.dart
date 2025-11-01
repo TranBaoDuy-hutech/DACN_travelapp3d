@@ -48,7 +48,7 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
             final db = DateTime.parse(b['date']);
             return db.compareTo(da);
           });
-          globals.myBookings = bookings;   // <<< lưu ra global
+          globals.myBookings = bookings;
           isLoading = false;
           errorMessage = null;
         });

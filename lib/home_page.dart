@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:travelapp/tours3d_page.dart';
 import 'dart:math' as math;
 import 'account_page.dart';
 import 'globals.dart' as globals;
@@ -52,10 +53,12 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     final List<Widget> pages = [
       const HomeContent(),
       const ToursPage(),
+      const Tours3DPage(), // ✅ thêm trang Tour 3D
       const NewsPage(),
       ChatPage(customerId: globals.currentCustomer?.customerID ?? 0),
       const AccountPage(),
     ];
+
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
@@ -63,16 +66,17 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         duration: const Duration(milliseconds: 500),
         switchInCurve: Curves.easeInOutCubic,
         switchOutCurve: Curves.easeInOutCubic,
-        transitionBuilder: (child, animation) => FadeTransition(
-          opacity: animation,
-          child: SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0.1, 0),
-              end: Offset.zero,
-            ).animate(animation),
-            child: child,
-          ),
-        ),
+        transitionBuilder: (child, animation) =>
+            FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.1, 0),
+                  end: Offset.zero,
+                ).animate(animation),
+                child: child,
+              ),
+            ),
         child: pages[_selectedIndex],
       ),
       bottomNavigationBar: _buildPremiumBottomNav(),
@@ -80,108 +84,107 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   Widget _buildPremiumBottomNav() {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-      height: 72,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
-            blurRadius: 30,
-            offset: const Offset(0, 10),
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
-        child: Stack(
+    return SafeArea(
+      top: false,
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        height: 64,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Theme
+                  .of(context)
+                  .colorScheme
+                  .primary
+                  .withOpacity(0.1),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            // Animated indicator
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOutCubic,
-              left: _selectedIndex * (MediaQuery.of(context).size.width - 32) / 5,
-              top: 0,
-              bottom: 0,
-              width: (MediaQuery.of(context).size.width - 32) / 5,
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Theme.of(context).colorScheme.primary,
-                      Theme.of(context).colorScheme.primary.withOpacity(0.7),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            // Navigation items
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildNavItem(Icons.home_rounded, "Trang chủ", 0),
-                _buildNavItem(Icons.explore_rounded, "Tour", 1),
-                _buildNavItem(Icons.article_rounded, "Tin tức", 2),
-                _buildNavItem(Icons.chat_bubble_rounded, "Chat", 3),
-                _buildNavItem(Icons.person_rounded, "Tài khoản", 4),
-              ],
-            ),
+            _buildNavItem(Icons.home_rounded, "Trang chủ", 0, 'Home'),
+            _buildNavItem(Icons.explore_rounded, "Tour", 1, 'Tours'),
+            _buildNavItem(
+                Icons.threed_rotation_rounded, "Tour 3D", 2, '3D Tours'),
+            _buildNavItem(Icons.article_rounded, "Tin tức", 3, 'News'),
+            _buildNavItem(Icons.chat_bubble_rounded, "Chat", 4, 'Chat'),
+            _buildNavItem(Icons.person_rounded, "Tài khoản", 5, 'Account'),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, int index) {
+  Widget _buildNavItem(IconData icon, String label, int index,
+      String semanticLabel) {
     final isSelected = _selectedIndex == index;
     return Expanded(
-      child: GestureDetector(
-        onTap: () => _onItemTapped(index),
-        behavior: HitTestBehavior.opaque,
-        child: Container(
-          color: Colors.transparent,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOutCubic,
-                child: Icon(
-                  icon,
-                  size: isSelected ? 26 : 24,
-                  color: isSelected ? Colors.white : Colors.grey[600],
+      child: Semantics(
+        label: semanticLabel,
+        selected: isSelected,
+        child: InkWell(
+          onTap: () => _onItemTapped(index),
+          borderRadius: BorderRadius.circular(16),
+          splashColor: Theme
+              .of(context)
+              .colorScheme
+              .primary
+              .withOpacity(0.2),
+          highlightColor: Theme
+              .of(context)
+              .colorScheme
+              .primary
+              .withOpacity(0.1),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ScaleTransition(
+                  scale: isSelected
+                      ? _scaleAnimation
+                      : const AlwaysStoppedAnimation(1.0),
+                  child: Icon(
+                    icon,
+                    size: 24,
+                    color: isSelected
+                        ? Theme
+                        .of(context)
+                        .colorScheme
+                        .primary
+                        : Theme
+                        .of(context)
+                        .colorScheme
+                        .onSurfaceVariant,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 300),
-                style: TextStyle(
-                  fontSize: isSelected ? 11 : 10,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  color: isSelected ? Colors.white : Colors.grey[600],
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  style: Theme
+                      .of(context)
+                      .textTheme
+                      .labelSmall
+                      ?.copyWith(
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                    color: isSelected
+                        ? Theme
+                        .of(context)
+                        .colorScheme
+                        .primary
+                        : Theme
+                        .of(context)
+                        .colorScheme
+                        .onSurfaceVariant,
+                  ),
                 ),
-                child: Text(label),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:travelapp/restaurant_page.dart';
+import 'package:travelapp/weather_screen.dart';
 import 'attraction_page.dart';
 import 'bus_page.dart';
 import 'cruise_page.dart';
 import 'experience_page.dart';
 import 'flight_page.dart';
+import 'hospital_page.dart';
 import 'hotel_page.dart';
+import 'map_page.dart';
 import 'promotion_page.dart';
 import 'contact_page.dart';
 
@@ -16,12 +20,16 @@ class FeatureGridWidget extends StatelessWidget {
     final features = [
       {"icon": Icons.flight, "title": "Chuyến bay", "color": Colors.blue},
       {"icon": Icons.hotel, "title": "Khách sạn", "color": Colors.green},
-      {"icon": Icons.explore, "title": "Trải nghiệm", "color": Colors.orange}, // Thay Tour
+      {"icon": Icons.explore, "title": "Trải nghiệm", "color": Colors.orange},
       {"icon": Icons.directions_bus, "title": "Xe khách", "color": Colors.red},
       {"icon": Icons.directions_boat, "title": "Du thuyền", "color": Colors.indigo},
       {"icon": Icons.local_offer, "title": "Khuyến mãi", "color": Colors.purple},
-      {"icon": Icons.landscape, "title": "Tham quan", "color": Colors.teal}, // Thay Thuê xe
+      {"icon": Icons.landscape, "title": "Tham quan", "color": Colors.teal},
       {"icon": Icons.phone, "title": "Liên hệ", "color": Colors.brown},
+      {"icon": Icons.wb_sunny, "title": "Thời tiết", "color": Colors.cyan},
+      {"icon": Icons.map, "title": "Bản đồ", "color": Colors.greenAccent},
+      {"icon": Icons.restaurant, "title": "Ẩm thực", "color": Colors.orangeAccent},
+      {"icon": Icons.local_hospital, "title": "Cứu trợ y tế", "color": Colors.redAccent},
     ];
 
     return Container(
@@ -113,6 +121,30 @@ class FeatureGridWidget extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const AttractionPage()),
+            );
+            break;
+          case "Thời tiết":
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const WeatherScreen()),
+            );
+            break;
+          case "Bản đồ":
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const MapPage()), // tạo MapPage riêng
+            );
+            break;
+          case "Ẩm thực":
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const RestaurantPage()), // tạo RestaurantPage riêng
+            );
+            break;
+          case "Cứu trợ y tế":
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const HospitalPage()), // tạo HospitalPage riêng
             );
             break;
           default:

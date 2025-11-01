@@ -12,52 +12,50 @@ class _PromoBannerWidgetState extends State<PromoBannerWidget> {
   final List<Map<String, String>> banners = [
     {
       "image": "assets/b7.jpg",
-      "title": "Tour Di sản miền Trung - HUTECH",
-      "subtitle": "Thực tập tour miền Trung - hành trình di sản"
-    },
-    {
-      "image": "assets/b6.jpg",
-      "title": "Tour Di sản miền Trung - HUTECH",
-      "subtitle": "Tham quan Đại Nội Huế – Hành trình về cố đô"
-    },
-    {
-      "image": "assets/b8.jpg",
-      "title": "Tour Di sản miền Trung - HUTECH",
-      "subtitle": "Khám phá Động Thiên Đường – Kỳ quan lòng đất"
-    },
-    {
-      "image": "assets/b9.jpg",
-      "title": "Tour Di sản miền Trung - HUTECH",
-      "subtitle": "Trải nghiệm Bà Nà Hills – Lâu đài trên mây"
-    },
-    {
-      "image": "assets/b1.jpg",
-      "title": "Khám phá Phú Quốc",
-      "subtitle": "Ưu đãi đặc biệt cho sinh viên"
-    },
-    {
-      "image": "assets/b2.jpg",
-      "title": "Vịnh Hạ Long – Hành trình trải nghiệm",
-      "subtitle": "Du thuyền sang trọng 3N2Đ"
-    },
-    {
-      "image": "assets/b3.jpg",
-      "title": "Phong Nha - Kẻ Bàng kỳ vĩ",
-      "subtitle": "Chuyến đi trải nghiệm của sinh viên HUTECH"
+      "title": "Khám phá Núi Cấm - An Giang",
+      "subtitle": "Trải nghiệm cảnh quan thiên nhiên tuyệt đẹp trên núi"
     },
     {
       "image": "assets/b4.jpg",
-      "title": "Đà Lạt – Thành phố sương mù",
-      "subtitle": "Khám phá cùng đoàn HUTECH"
+      "title": "Khám phá Tri Tôn - An Giang",
+      "subtitle": "Trải nghiệm văn hóa và cảnh quan tuyệt đẹp miền Tây An Giang"
     },
     {
-      "image": "assets/b5.png",
-      "title": "Du lịch mùa lễ hội",
-      "subtitle": "Chương trình đặc biệt cho sinh viên HUTECH"
+      "image": "assets/b8.jpg",
+      "title": "Khám phá Cồn Én - An Giang",
+      "subtitle": "Thưởng ngoạn cảnh sông nước và trải nghiệm cuộc sống dân dã miền Tây An Giang"
+    },
+    {
+      "image": "assets/b9.jpg",
+      "title": "Rừng Tràm Trà Sư - An Giang",
+      "subtitle": "Tham quan rừng ngập nước và thưởng ngoạn chim thú An Giang"
+    },
+    {
+      "image": "assets/t1.jpg",
+      "title": "Miếu Bà Chúa Xứ - An Giang",
+      "subtitle": "Hành hương và khám phá truyền thuyết nổi tiếng An Giang"
+    },
+    {
+      "image": "assets/b2.jpg",
+      "title": "Hồ Tà Pạ - Núi Sam - An Giang",
+      "subtitle": "Ngắm bình minh và cảnh quan tuyệt đẹp An Giang"
+    },
+    {
+      "image": "assets/t11.jpg",
+      "title": "Cây thốt nốt tình yêu - An Giang",
+      "subtitle": "Trải nghiệm không gian yên bình, lãng mạn An Giang"
+    },
+    {
+      "image": "assets/b1.jpg",
+      "title": "Thiền viện Trúc Lâm - An Giang",
+      "subtitle": "Trải nghiệm không gian thanh tịnh và kiến trúc Phật giáo độc đáo An Giang"
+    },
+    {
+      "image": "assets/b3.jpg",
+      "title": "Chùa Khmer Tân Châu - An Giang",
+      "subtitle": "Khám phá kiến trúc Khmer độc đáo và nét văn hóa truyền thống miền Tây An Giang"
     },
   ];
-
-
   int _currentIndex = 0;
 
   @override

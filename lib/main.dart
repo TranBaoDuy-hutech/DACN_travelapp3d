@@ -23,12 +23,12 @@ class VietLuTravelApp extends StatelessWidget {
       ),
       initialRoute: "/login",
       routes: {
-        "/login": (_) => const LoginPage(),
-        "/register": (_) => const RegisterPage(),
+        "/login":           (_) => const LoginPage(),
+        "/register":        (_) => const RegisterPage(),
         "/forgot-password": (_) => const ForgotPasswordPage(),
-        "/reset-password": (_) => const ResetPasswordPage(),
-        "/home": (_) => const HomePage(),             // khách hàng
-        "/admin": (_) => const AdminDashboardPage(),  // admin/staff
+        "/reset-password":  (_) => const ResetPasswordPage(),
+        "/home":            (_) => const HomePage(),
+        "/admin":           (_) => const AdminDashboardPage(),
       },
       debugShowCheckedModeBanner: false,
     );
