@@ -22,7 +22,7 @@ class _TourManagementPageState extends State<TourManagementPage> {
   Future<void> fetchTours() async {
     setState(() => isLoading = true);
     try {
-      final response = await http.get(Uri.parse('http://10.0.2.2:8000/admin/tours'));
+      final response = await http.get(Uri.parse('http://127.0.0.1:8000/admin/tours'));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() => tours = data['data']);
@@ -38,7 +38,7 @@ class _TourManagementPageState extends State<TourManagementPage> {
 
   Future<void> deleteTour(int tourId) async {
     try {
-      final response = await http.delete(Uri.parse('http://10.0.2.2:8000/admin/tours/$tourId'));
+      final response = await http.delete(Uri.parse('http://127.0.0.1:8000/admin/tours/$tourId'));
       if (response.statusCode == 200) {
         fetchTours();
       } else {
@@ -90,13 +90,13 @@ class _TourManagementPageState extends State<TourManagementPage> {
               try {
                 if (tour == null) {
                   await http.post(
-                    Uri.parse('http://10.0.2.2:8000/admin/tours'),
+                    Uri.parse('http://127.0.0.1:8000/admin/tours'),
                     headers: {"Content-Type": "application/json"},
                     body: json.encode(tourData),
                   );
                 } else {
                   await http.put(
-                    Uri.parse('http://10.0.2.2:8000/admin/tours/${tour['TourID']}'),
+                    Uri.parse('http://127.0.0.1:8000/admin/tours/${tour['TourID']}'),
                     headers: {"Content-Type": "application/json"},
                     body: json.encode(tourData),
                   );

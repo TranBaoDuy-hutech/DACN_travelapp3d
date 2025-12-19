@@ -22,11 +22,11 @@ class _VanHoaPageState extends State<VanHoaPage> {
 
   Future<void> fetchVanHoa() async {
     try {
-      final res = await http.get(Uri.parse("http://10.0.2.2:8000/vanhoa"));
+      final res = await http.get(Uri.parse("http://127.0.0.1:8000/vanhoaw"));
       if (res.statusCode == 200) {
         final jsonData = json.decode(res.body);
         setState(() {
-          vanHoaList = jsonData["data"];
+          vanHoaList = jsonData["data"] ?? [];
           isLoading = false;
         });
       } else {
@@ -38,8 +38,170 @@ class _VanHoaPageState extends State<VanHoaPage> {
     }
   }
 
+  // Widget card riêng để tái sử dụng
+  Widget buildVanHoaCard(dynamic item, bool isDesktop, bool isTablet) {
+    bool isHovered = false;
+
+    return StatefulBuilder(
+      builder: (context, setCardState) {
+        return MouseRegion(
+          cursor: SystemMouseCursors.click,
+          onEnter: (_) => setCardState(() => isHovered = true),
+          onExit: (_) => setCardState(() => isHovered = false),
+          child: GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => VanHoaDetailPage(vanHoaId: item['id']),
+                ),
+              );
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              transform: Matrix4.identity()..scale(isHovered ? 1.05 : 1.0),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.grey.shade900, Colors.black],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: Colors.greenAccent.shade700.withOpacity(0.3),
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: isHovered
+                        ? Colors.greenAccent.withOpacity(0.4)
+                        : Colors.greenAccent.withOpacity(0.2),
+                    blurRadius: isHovered ? 30 : 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                    child: Image.network(
+                      item['hinhAnh'],
+                      width: double.infinity,
+                      height: isDesktop ? 280 : (isTablet ? 240 : 220),
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          height: isDesktop ? 280 : (isTablet ? 240 : 220),
+                          color: Colors.grey[800],
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.greenAccent.shade400,
+                              strokeWidth: 2,
+                            ),
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        height: isDesktop ? 280 : (isTablet ? 240 : 220),
+                        color: Colors.grey[800],
+                        child: const Icon(Icons.image_not_supported, size: 60, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.all(isDesktop ? 24 : 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(isDesktop ? 12 : 10),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [Colors.greenAccent.shade400, Colors.green.shade700],
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.greenAccent.withOpacity(0.3),
+                                    blurRadius: 8,
+                                    spreadRadius: 1,
+                                  ),
+                                ],
+                              ),
+                              child: Icon(
+                                Icons.account_balance,
+                                color: Colors.white,
+                                size: isDesktop ? 26 : 22,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                item['tieuDe'],
+                                style: TextStyle(
+                                  fontSize: isDesktop ? 24 : 22,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                            Icon(
+                              Icons.arrow_forward_ios,
+                              color: Colors.greenAccent.shade400,
+                              size: isDesktop ? 22 : 20,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          height: 1.5,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.greenAccent.shade700.withOpacity(0.5),
+                                Colors.transparent,
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          item['moTa'],
+                          maxLines: isDesktop ? 4 : 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: isDesktop ? 16 : 15,
+                            color: Colors.grey.shade300,
+                            height: 1.5,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final isDesktop = size.width > 1200;      // 3 cột
+    final isTablet = size.width > 600 && size.width <= 1200; // 2 cột
+    final crossAxisCount = isDesktop ? 3 : (isTablet ? 2 : 1);
+
     return Scaffold(
       backgroundColor: Colors.black,
       extendBodyBehindAppBar: true,
@@ -51,7 +213,7 @@ class _VanHoaPageState extends State<VanHoaPage> {
             const SizedBox(width: 8),
             const Text(
               'Văn Hóa An Giang',
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 22),
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 22, color: Colors.tealAccent),
             ),
           ],
         ),
@@ -74,11 +236,7 @@ class _VanHoaPageState extends State<VanHoaPage> {
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              Colors.black,
-              Colors.green.shade900,
-              Colors.black,
-            ],
+            colors: [Colors.black, Colors.green.shade900, Colors.black],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             stops: const [0.0, 0.5, 1.0],
@@ -97,11 +255,7 @@ class _VanHoaPageState extends State<VanHoaPage> {
                 const SizedBox(height: 20),
                 const Text(
                   'Đang tải văn hóa...',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ],
             ),
@@ -113,178 +267,39 @@ class _VanHoaPageState extends State<VanHoaPage> {
               padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    Colors.grey.shade800.withOpacity(0.8),
-                    Colors.black.withOpacity(0.8),
-                  ],
+                  colors: [Colors.grey.shade800.withOpacity(0.8), Colors.black.withOpacity(0.8)],
                 ),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: Colors.grey.shade700,
-                  width: 2,
-                ),
+                border: Border.all(color: Colors.grey.shade700, width: 2),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.info_outline,
-                      color: Colors.grey.shade400, size: 64),
+                  Icon(Icons.info_outline, color: Colors.grey.shade400, size: 64),
                   const SizedBox(height: 16),
                   const Text(
                     'Không có dữ liệu văn hóa',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600),
+                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
             ),
           )
-              : ListView.builder(
-            padding: const EdgeInsets.all(16),
+              : GridView.builder(
+            padding: EdgeInsets.symmetric(
+              horizontal: isDesktop ? size.width * 0.1 : (isTablet ? 24 : 16),
+              vertical: 24,
+            ),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              childAspectRatio: isDesktop ? 0.85 : (isTablet ? 0.8 : 0.75),
+              crossAxisSpacing: 24,
+              mainAxisSpacing: 32,
+            ),
             itemCount: vanHoaList.length,
             itemBuilder: (context, index) {
               final item = vanHoaList[index];
-              return GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          VanHoaDetailPage(vanHoaId: item['id']),
-                    ),
-                  );
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                  margin: const EdgeInsets.only(bottom: 24),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.grey.shade900,
-                        Colors.black,
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: Colors.greenAccent.shade700.withOpacity(0.3),
-                      width: 2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.greenAccent.withOpacity(0.2),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Hình ảnh
-                      ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(24),
-                        ),
-                        child: Image.network(
-                          item['hinhAnh'],
-                          width: double.infinity,
-                          height: 220,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              Container(
-                                height: 220,
-                                color: Colors.grey[800],
-                                child: const Icon(Icons.image_not_supported,
-                                    size: 60, color: Colors.white),
-                              ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        Colors.greenAccent.shade400,
-                                        Colors.green.shade700,
-                                      ],
-                                    ),
-                                    borderRadius: BorderRadius.circular(12),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.greenAccent.withOpacity(0.3),
-                                        blurRadius: 8,
-                                        spreadRadius: 1,
-                                      ),
-                                    ],
-                                  ),
-                                  child: const Icon(
-                                    Icons.account_balance,
-                                    color: Colors.white,
-                                    size: 22,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    item['tieuDe'],
-                                    style: const TextStyle(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.w800,
-                                      color: Colors.white,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                ),
-                                Icon(
-                                  Icons.arrow_forward_ios,
-                                  color: Colors.greenAccent.shade400,
-                                  size: 20,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            Container(
-                              height: 1.5,
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Colors.greenAccent.shade700.withOpacity(0.5),
-                                    Colors.transparent,
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              item['moTa'],
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 15,
-                                color: Colors.grey.shade300,
-                                height: 1.5,
-                                letterSpacing: 0.3,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
+              return buildVanHoaCard(item, isDesktop, isTablet);
             },
           ),
         ),

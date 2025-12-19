@@ -22,7 +22,7 @@ class _UserManagementPageState extends State<UserManagementPage> {
   Future<void> fetchUsers() async {
     setState(() => isLoading = true);
     try {
-      final response = await http.get(Uri.parse('http://10.0.2.2:8000/admin/users'));
+      final response = await http.get(Uri.parse('http://127.0.0.1:8000/admin/users'));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
@@ -40,7 +40,7 @@ class _UserManagementPageState extends State<UserManagementPage> {
 
   Future<void> deleteUser(int userId) async {
     try {
-      final response = await http.delete(Uri.parse('http://10.0.2.2:8000/admin/users/$userId'));
+      final response = await http.delete(Uri.parse('http://127.0.0.1:8000/admin/users/$userId'));
       if (response.statusCode == 200) {
         fetchUsers();
       } else {
@@ -86,13 +86,13 @@ class _UserManagementPageState extends State<UserManagementPage> {
               try {
                 if (user == null) {
                   await http.post(
-                    Uri.parse('http://10.0.2.2:8000/admin/users'),
+                    Uri.parse('http://127.0.0.1:8000/admin/users'),
                     headers: {"Content-Type": "application/json"},
                     body: json.encode(userData),
                   );
                 } else {
                   await http.put(
-                    Uri.parse('http://10.0.2.2:8000/admin/users/${user['UserID']}'),
+                    Uri.parse('http://127.0.0.1:8000/admin/users/${user['UserID']}'),
                     headers: {"Content-Type": "application/json"},
                     body: json.encode(userData),
                   );

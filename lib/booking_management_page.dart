@@ -23,7 +23,7 @@ class _BookingManagementPageState extends State<BookingManagementPage> {
   Future<void> fetchBookings() async {
     try {
       final response =
-      await http.get(Uri.parse('http://10.0.2.2:8000/admin/bookings'));
+      await http.get(Uri.parse('http://127.0.0.1:8000/admin/bookings'));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
@@ -98,7 +98,7 @@ class _BookingManagementPageState extends State<BookingManagementPage> {
                   // Load HDV khả dụng
                   FutureBuilder<http.Response>(
                     future: http.get(Uri.parse(
-                        'http://10.0.2.2:8000/admin/available-guides/$bookingIdRaw')),
+                        'http://127.0.0.1:8000/admin/available-guides/$bookingIdRaw')),
                     builder: (context, snapshot) {
                       if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
                       if (snapshot.hasError) return const Text("Lỗi tải HDV");
@@ -155,7 +155,7 @@ class _BookingManagementPageState extends State<BookingManagementPage> {
 
                       try {
                         final res = await http.post(
-                          Uri.parse('http://10.0.2.2:8000/admin/assignments'),
+                          Uri.parse('http://127.0.0.1:8000/admin/assignments'),
                           headers: {"Content-Type": "application/json"},
                           body: json.encode(payload),
                         );

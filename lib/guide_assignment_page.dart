@@ -29,7 +29,7 @@ class _GuideAssignmentPageState extends State<GuideAssignmentPage> {
 
     try {
       final response =
-      await http.get(Uri.parse('http://10.0.2.2:8000/admin/assignments'));
+      await http.get(Uri.parse('http://127.0.0.1:8000/admin/assignments'));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         print("Assignments raw data: $data");
@@ -74,7 +74,7 @@ class _GuideAssignmentPageState extends State<GuideAssignmentPage> {
     try {
       final response = await http.delete(
         Uri.parse(
-            "http://10.0.2.2:8000/admin/assignments?tour_id=$tourId&guide_id=$guideId"),
+            "http://127.0.0.1:8000/admin/assignments?tour_id=$tourId&guide_id=$guideId"),
       );
       print("Delete response status: ${response.statusCode}");
       print("Delete response body: ${response.body}");

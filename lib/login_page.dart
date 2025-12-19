@@ -126,7 +126,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       });
 
       // Login Customer
-      final customerUrl = Uri.parse("http://10.0.2.2:8000/customers/login");
+      final customerUrl = Uri.parse("http://127.0.0.1:8000/customers/login");
       final customerRes = await http
           .post(customerUrl, headers: {"Content-Type": "application/json"}, body: body)
           .timeout(const Duration(seconds: 10));
@@ -142,7 +142,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       }
 
       // Login User
-      final userUrl = Uri.parse("http://10.0.2.2:8000/users/login");
+      final userUrl = Uri.parse("http://127.0.0.1:8000/users/login");
       final userRes = await http
           .post(userUrl, headers: {"Content-Type": "application/json"}, body: body)
           .timeout(const Duration(seconds: 10));

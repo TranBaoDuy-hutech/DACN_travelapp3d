@@ -44,7 +44,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> with SingleTick
 
   Future<void> fetchStats() async {
     try {
-      final response = await http.get(Uri.parse('http://10.0.2.2:8000/admin/stats'));
+      final response = await http.get(Uri.parse('http://127.0.0.1:8000/admin/stats'));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {

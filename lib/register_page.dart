@@ -109,7 +109,7 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
     setState(() => loading = true);
 
     try {
-      final url = Uri.parse("http://10.0.2.2:8000/customers/register");
+      final url = Uri.parse("http://127.0.0.1:8000/customers/register");
       final response = await http.post(
         url,
         headers: {"Content-Type": "application/json"},

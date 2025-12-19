@@ -14,8 +14,8 @@ class AdminChatPage extends StatefulWidget {
 }
 
 class _AdminChatPageState extends State<AdminChatPage> {
-  static const String baseUrl = "http://10.0.2.2:8000";
-  static const String wsUrl = "ws://10.0.2.2:8000";
+  static const String baseUrl = "http://127.0.0.1:8000";
+  static const String wsUrl = "ws://127.0.0.1:8000";
 
   List customers = [];
   List messages = [];

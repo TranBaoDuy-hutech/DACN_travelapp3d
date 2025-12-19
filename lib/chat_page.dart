@@ -48,7 +48,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
 
   Future<void> fetchChatHistory() async {
     setState(() => isLoading = true);
-    final url = Uri.parse('http://10.0.2.2:8000/chat/history/${widget.customerId}');
+    final url = Uri.parse('http://127.0.0.1:8000/chat/history/${widget.customerId}');
     try {
       final res = await http.get(url).timeout(
         const Duration(seconds: 10),
@@ -76,7 +76,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
 
   void connectWebSocket() {
     channel = WebSocketChannel.connect(
-      Uri.parse('ws://10.0.2.2:8000/ws/chat/${widget.customerId}'),
+      Uri.parse('ws://127.0.0.1:8000/ws/chat/${widget.customerId}'),
     );
 
     channel.stream.listen(

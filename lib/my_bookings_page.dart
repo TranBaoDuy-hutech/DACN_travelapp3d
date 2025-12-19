@@ -15,7 +15,7 @@ class MyBookingsPage extends StatefulWidget {
 class _MyBookingsPageState extends State<MyBookingsPage> {
   bool isLoading = true;
   String? errorMessage;
-  List bookings = [];
+  List<dynamic> bookings = [];
 
   @override
   void initState() {
@@ -24,6 +24,11 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
   }
 
   Future<void> fetchBookings() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+
     try {
       final customer = globals.currentCustomer;
       if (customer == null) {
@@ -35,34 +40,35 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
       }
 
       final response = await http.get(
-        Uri.parse("http://10.0.2.2:8000/bookings/${customer.customerID}"),
+        Uri.parse("http://127.0.0.1:8000/bookings/${customer.customerID}"),
       );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        final List<dynamic> fetchedBookings = data is List ? data : [data];
+
+        // Sắp xếp theo ngày gần nhất trước
+        fetchedBookings.sort((a, b) {
+          final da = DateTime.parse(a['date']);
+          final db = DateTime.parse(b['date']);
+          return db.compareTo(da);
+        });
 
         setState(() {
-          bookings = data is List ? data : [data];
-          bookings.sort((a, b) {
-            final da = DateTime.parse(a['date']);
-            final db = DateTime.parse(b['date']);
-            return db.compareTo(da);
-          });
-          globals.myBookings = bookings;
+          bookings = fetchedBookings;
+          globals.myBookings = bookings; // Đồng bộ với globals để AccountPage cập nhật realtime
           isLoading = false;
-          errorMessage = null;
         });
       } else {
         setState(() {
           isLoading = false;
-          errorMessage =
-          "Server trả về lỗi ${response.statusCode}: ${response.body}";
+          errorMessage = "Lỗi server: ${response.statusCode}";
         });
       }
     } catch (e) {
       setState(() {
         isLoading = false;
-        errorMessage = "Lỗi khi tải dữ liệu: $e";
+        errorMessage = "Không thể kết nối đến server. Vui lòng kiểm tra mạng.";
       });
     }
   }
@@ -88,47 +94,190 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
     }
   }
 
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'confirmed':
+      case 'đã xác nhận':
+        return Colors.green;
+      case 'pending':
+      case 'chờ xác nhận':
+        return Colors.orange;
+      case 'cancelled':
+      case 'đã hủy':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Tour đã đặt")),
+      appBar: AppBar(
+        title: const Text(
+          "Tour đã đặt",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: Colors.teal.shade700,
+        foregroundColor: Colors.white,
+        elevation: 2,
+        centerTitle: true,
+      ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+        child: CircularProgressIndicator(
+          color: Colors.teal,
+          strokeWidth: 3,
+        ),
+      )
           : errorMessage != null
-          ? Center(child: Text(errorMessage!))
+          ? Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
+            const SizedBox(height: 16),
+            Text(
+              errorMessage!,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: fetchBookings,
+              icon: const Icon(Icons.refresh),
+              label: const Text("Thử lại"),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+            ),
+          ],
+        ),
+      )
           : bookings.isEmpty
-          ? const Center(child: Text("Bạn chưa đặt tour nào"))
+          ? Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.inbox_rounded, size: 80, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text(
+              "Bạn chưa đặt tour nào",
+              style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "Hãy khám phá và đặt tour ngay!",
+              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+            ),
+          ],
+        ),
+      )
           : RefreshIndicator(
         onRefresh: fetchBookings,
+        color: Colors.teal,
         child: ListView.builder(
+          padding: const EdgeInsets.all(12),
           itemCount: bookings.length,
           itemBuilder: (context, index) {
             final booking = bookings[index];
-            final tourName = booking['tourName']?.toString() ?? "Chưa rõ";
+            final tourName = booking['tourName']?.toString() ?? "Tour không tên";
             final date = _formatDate(booking['date']);
-            final numPeople = booking['numPeople']?.toString() ?? "Chưa rõ";
+            final numPeople = booking['numPeople']?.toString() ?? "0";
             final totalPrice = _formatCurrency(booking['totalPrice']);
+            final status = (booking['status']?.toString() ?? "pending");
 
             return Card(
-              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              elevation: 6,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
               ),
-              elevation: 4,
-              child: ListTile(
-                leading: const Icon(Icons.tour, color: Colors.teal, size: 32),
-                title: Text(tourName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                subtitle: Text("Ngày: $date | Khách: $numPeople"),
-                trailing: Text(totalPrice,
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (_) => BookingDetailPage(booking: booking),
                     ),
-                  ).then((_) => fetchBookings());
+                  ).then((_) {
+                    // TỰ ĐỘNG CẬP NHẬT DANH SÁCH KHI QUAY LẠI (ví dụ: hủy tour thành công)
+                    fetchBookings();
+                  });
                 },
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.teal.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(Icons.tour_rounded, color: Colors.teal, size: 28),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  tourName,
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF1A1A1A),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  "Ngày khởi hành: $date",
+                                  style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: _getStatusColor(status).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              status.toUpperCase(),
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: _getStatusColor(status),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "$numPeople khách",
+                            style: TextStyle(fontSize: 15, color: Colors.grey[600]),
+                          ),
+                          Text(
+                            totalPrice,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ),
             );
           },

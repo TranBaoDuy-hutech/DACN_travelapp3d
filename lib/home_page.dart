@@ -23,6 +23,12 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   int _selectedIndex = 0;
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
+  bool _isHovered = false;
+  int _hoveredIndex = -1;
+
+  final Color oceanBlue = const Color(0xFF0077BE);
+  final Color lightOcean = const Color(0xFF00A6ED);
+  final Color deepOcean = const Color(0xFF005A8C);
 
   @override
   void initState() {
@@ -31,7 +37,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       duration: const Duration(milliseconds: 200),
       vsync: this,
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
   }
@@ -50,40 +56,276 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWeb = screenWidth > 900;
+    final isMedium = screenWidth > 600 && screenWidth <= 900;
+
     final List<Widget> pages = [
       const HomeContent(),
       const ToursPage(),
-      const Tours3DPage(), // ✅ thêm trang Tour 3D
+      const Tours3DPage(),
       const NewsPage(),
       ChatPage(customerId: globals.currentCustomer?.customerID ?? 0),
       const AccountPage(),
     ];
 
-
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 500),
-        switchInCurve: Curves.easeInOutCubic,
-        switchOutCurve: Curves.easeInOutCubic,
-        transitionBuilder: (child, animation) =>
-            FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0.1, 0),
-                  end: Offset.zero,
-                ).animate(animation),
-                child: child,
+      body: Row(
+        children: [
+          // Side Navigation for Web
+          if (isWeb || isMedium) _buildSideNav(isWeb),
+
+          // Main Content
+          Expanded(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 500),
+              switchInCurve: Curves.easeInOutCubic,
+              switchOutCurve: Curves.easeInOutCubic,
+              transitionBuilder: (child, animation) => FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0.05, 0),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: child,
+                ),
               ),
+              child: pages[_selectedIndex],
             ),
-        child: pages[_selectedIndex],
+          ),
+        ],
       ),
-      bottomNavigationBar: _buildPremiumBottomNav(),
+      // Bottom Navigation for Mobile
+      bottomNavigationBar: (isWeb || isMedium) ? null : _buildMobileBottomNav(),
     );
   }
 
-  Widget _buildPremiumBottomNav() {
+  Widget _buildSideNav(bool isExpanded) {
+    return Container(
+      width: isExpanded ? 280 : 80,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: oceanBlue.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 0),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Logo Section
+          Container(
+            padding: EdgeInsets.all(isExpanded ? 24 : 16),
+            child: Row(
+              mainAxisAlignment: isExpanded ? MainAxisAlignment.start : MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [deepOcean, oceanBlue, lightOcean],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.asset(
+                      "assets/logo3.jpg",
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+                if (isExpanded) ...[
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Việt Lữ Travel",
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            color: oceanBlue,
+                          ),
+                        ),
+                        Text(
+                          "Việt Nam & Lữ Hành",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[600],
+                            letterSpacing: 2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+
+          Divider(color: Colors.grey[200], height: 1),
+
+          const SizedBox(height: 16),
+
+          // Navigation Items
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              children: [
+                _buildSideNavItem(
+                  icon: Icons.home_rounded,
+                  label: "Trang chủ",
+                  index: 0,
+                  isExpanded: isExpanded,
+                ),
+                const SizedBox(height: 8),
+                _buildSideNavItem(
+                  icon: Icons.explore_rounded,
+                  label: "Tours",
+                  index: 1,
+                  isExpanded: isExpanded,
+                ),
+                const SizedBox(height: 8),
+                _buildSideNavItem(
+                  icon: Icons.threed_rotation_rounded,
+                  label: "Tour 3D",
+                  index: 2,
+                  isExpanded: isExpanded,
+                ),
+                const SizedBox(height: 8),
+                _buildSideNavItem(
+                  icon: Icons.article_rounded,
+                  label: "Tin tức",
+                  index: 3,
+                  isExpanded: isExpanded,
+                ),
+                const SizedBox(height: 8),
+                _buildSideNavItem(
+                  icon: Icons.chat_bubble_rounded,
+                  label: "Chat",
+                  index: 4,
+                  isExpanded: isExpanded,
+                ),
+              ],
+            ),
+          ),
+
+          Divider(color: Colors.grey[200], height: 1),
+
+          // Account Section
+          _buildSideNavItem(
+            icon: Icons.person_rounded,
+            label: "Tài khoản",
+            index: 5,
+            isExpanded: isExpanded,
+            isBottom: true,
+          ),
+
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSideNavItem({
+    required IconData icon,
+    required String label,
+    required int index,
+    required bool isExpanded,
+    bool isBottom = false,
+  }) {
+    final isSelected = _selectedIndex == index;
+    final isHovered = _hoveredIndex == index;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hoveredIndex = index),
+      onExit: (_) => setState(() => _hoveredIndex = -1),
+      cursor: SystemMouseCursors.click,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        margin: EdgeInsets.symmetric(
+          horizontal: isBottom ? 12 : 0,
+          vertical: isBottom ? 8 : 0,
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => _onItemTapped(index),
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                gradient: isSelected
+                    ? LinearGradient(
+                  colors: [oceanBlue, lightOcean],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+                    : null,
+                color: isSelected
+                    ? null
+                    : (isHovered ? Colors.grey[100] : Colors.transparent),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: isSelected
+                    ? [
+                  BoxShadow(
+                    color: oceanBlue.withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+                    : null,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    icon,
+                    size: 24,
+                    color: isSelected
+                        ? Colors.white
+                        : (isHovered ? oceanBlue : Colors.grey[600]),
+                  ),
+                  if (isExpanded) ...[
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                          color: isSelected
+                              ? Colors.white
+                              : (isHovered ? oceanBlue : Colors.grey[700]),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileBottomNav() {
     return SafeArea(
       top: false,
       child: Container(
@@ -91,100 +333,68 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         height: 64,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Theme
-                  .of(context)
-                  .colorScheme
-                  .primary
-                  .withOpacity(0.1),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              color: oceanBlue.withOpacity(0.15),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildNavItem(Icons.home_rounded, "Trang chủ", 0, 'Home'),
-            _buildNavItem(Icons.explore_rounded, "Tour", 1, 'Tours'),
-            _buildNavItem(
-                Icons.threed_rotation_rounded, "Tour 3D", 2, '3D Tours'),
-            _buildNavItem(Icons.article_rounded, "Tin tức", 3, 'News'),
-            _buildNavItem(Icons.chat_bubble_rounded, "Chat", 4, 'Chat'),
-            _buildNavItem(Icons.person_rounded, "Tài khoản", 5, 'Account'),
+            _buildMobileNavItem(Icons.home_rounded, "Trang chủ", 0),
+            _buildMobileNavItem(Icons.explore_rounded, "Tour", 1),
+            _buildMobileNavItem(Icons.threed_rotation_rounded, "3D", 2),
+            _buildMobileNavItem(Icons.article_rounded, "Tin", 3),
+            _buildMobileNavItem(Icons.chat_bubble_rounded, "Chat", 4),
+            _buildMobileNavItem(Icons.person_rounded, "Tài khoản", 5),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, int index,
-      String semanticLabel) {
+  Widget _buildMobileNavItem(IconData icon, String label, int index) {
     final isSelected = _selectedIndex == index;
     return Expanded(
-      child: Semantics(
-        label: semanticLabel,
-        selected: isSelected,
-        child: InkWell(
-          onTap: () => _onItemTapped(index),
-          borderRadius: BorderRadius.circular(16),
-          splashColor: Theme
-              .of(context)
-              .colorScheme
-              .primary
-              .withOpacity(0.2),
-          highlightColor: Theme
-              .of(context)
-              .colorScheme
-              .primary
-              .withOpacity(0.1),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ScaleTransition(
-                  scale: isSelected
-                      ? _scaleAnimation
-                      : const AlwaysStoppedAnimation(1.0),
-                  child: Icon(
-                    icon,
-                    size: 24,
-                    color: isSelected
-                        ? Theme
-                        .of(context)
-                        .colorScheme
-                        .primary
-                        : Theme
-                        .of(context)
-                        .colorScheme
-                        .onSurfaceVariant,
-                  ),
+      child: InkWell(
+        onTap: () => _onItemTapped(index),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: isSelected
+                      ? LinearGradient(
+                    colors: [oceanBlue.withOpacity(0.2), lightOcean.withOpacity(0.2)],
+                  )
+                      : null,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  label,
-                  style: Theme
-                      .of(context)
-                      .textTheme
-                      .labelSmall
-                      ?.copyWith(
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                    color: isSelected
-                        ? Theme
-                        .of(context)
-                        .colorScheme
-                        .primary
-                        : Theme
-                        .of(context)
-                        .colorScheme
-                        .onSurfaceVariant,
-                  ),
+                child: Icon(
+                  icon,
+                  size: 22,
+                  color: isSelected ? oceanBlue : Colors.grey[600],
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected ? oceanBlue : Colors.grey[600],
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -203,6 +413,10 @@ class _HomeContentState extends State<HomeContent> with TickerProviderStateMixin
   late AnimationController _floatingController;
   final ScrollController _scrollController = ScrollController();
   double _scrollOffset = 0;
+
+  final Color oceanBlue = const Color(0xFF0077BE);
+  final Color lightOcean = const Color(0xFF00A6ED);
+  final Color deepOcean = const Color(0xFF005A8C);
 
   @override
   void initState() {
@@ -228,9 +442,14 @@ class _HomeContentState extends State<HomeContent> with TickerProviderStateMixin
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWeb = screenWidth > 900;
+    final maxWidth = screenWidth > 1400 ? 1200.0 : (isWeb ? screenWidth * 0.85 : screenWidth);
+    final horizontalPadding = isWeb ? 60.0 : 20.0;
+
     return Stack(
       children: [
-        // Animated background gradient
+        // Animated background
         AnimatedBuilder(
           animation: _floatingController,
           builder: (context, child) {
@@ -241,7 +460,7 @@ class _HomeContentState extends State<HomeContent> with TickerProviderStateMixin
                   end: Alignment.bottomRight,
                   colors: [
                     const Color(0xFFF8F9FA),
-                    Theme.of(context).colorScheme.primary.withOpacity(0.03),
+                    oceanBlue.withOpacity(0.03),
                     const Color(0xFFF8F9FA),
                   ],
                   stops: [
@@ -254,107 +473,118 @@ class _HomeContentState extends State<HomeContent> with TickerProviderStateMixin
             );
           },
         ),
-        // Floating circles decoration
-        Positioned(
-          top: -100 + (_scrollOffset * 0.3),
-          right: -50,
-          child: _buildFloatingCircle(200, Colors.blue.withOpacity(0.05)),
-        ),
-        Positioned(
-          top: 200 - (_scrollOffset * 0.2),
-          left: -80,
-          child: _buildFloatingCircle(150, Colors.purple.withOpacity(0.05)),
-        ),
+
+        // Floating decorations
+        if (isWeb) ...[
+          Positioned(
+            top: -100 + (_scrollOffset * 0.3),
+            right: -50,
+            child: _buildFloatingCircle(250, oceanBlue.withOpacity(0.05)),
+          ),
+          Positioned(
+            top: 200 - (_scrollOffset * 0.2),
+            left: -80,
+            child: _buildFloatingCircle(180, lightOcean.withOpacity(0.05)),
+          ),
+        ],
+
         // Main content
         SafeArea(
-          child: CustomScrollView(
-            controller: _scrollController,
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              // Header with parallax effect
-              SliverToBoxAdapter(
-                child: Transform.translate(
-                  offset: Offset(0, _scrollOffset * 0.5),
-                  child: Opacity(
-                    opacity: (1 - (_scrollOffset / 200)).clamp(0.0, 1.0),
-                    child: const Padding(
-                      padding: EdgeInsets.fromLTRB(20, 16, 20, 0),
-                      child: HeaderWidget(),
+          child: Center(
+            child: Container(
+              constraints: BoxConstraints(maxWidth: maxWidth),
+              child: CustomScrollView(
+                controller: _scrollController,
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  // Header
+                  SliverToBoxAdapter(
+                    child: Transform.translate(
+                      offset: Offset(0, _scrollOffset * 0.5),
+                      child: Opacity(
+                        opacity: (1 - (_scrollOffset / 200)).clamp(0.0, 1.0),
+                        child: Padding(
+                          padding: EdgeInsets.fromLTRB(horizontalPadding, 16, horizontalPadding, 0),
+                          child: const HeaderWidget(),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
 
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 24),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(height: isWeb ? 32 : 24),
 
-                      // Premium Banner with glassmorphism
-                      _AnimatedSection(
-                        delay: 100,
-                        child: _buildPremiumBanner(),
-                      ),
+                          // Premium Banner
+                          _AnimatedSection(
+                            delay: 100,
+                            child: _buildPremiumBanner(isWeb),
+                          ),
 
-                      const SizedBox(height: 32),
+                          SizedBox(height: isWeb ? 48 : 32),
 
-                      // Feature Grid Section
-                      _AnimatedSection(
-                        delay: 200,
-                        child: _buildSection(
-                          context,
-                          title: "Khám phá nổi bật",
-                          icon: Icons.auto_awesome_rounded,
-                          child: const FeatureGridWidget(),
-                        ),
-                      ),
-
-                      const SizedBox(height: 32),
-
-                      // Quick Categories Section
-                      _AnimatedSection(
-                        delay: 300,
-                        child: _buildSection(
-                          context,
-                          title: "Danh mục nhanh",
-                          icon: Icons.apps_rounded,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(24),
-                              color: Colors.white,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.06),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(24),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: QuickCategoriesWidget(
-                                  onCategoryTap: (category) {
-                                    HapticFeedback.selectionClick();
-                                    debugPrint("Chọn danh mục: $category");
-                                  },
-                                ),
-                              ),
+                          // Feature Grid
+                          _AnimatedSection(
+                            delay: 200,
+                            child: _buildSection(
+                              context,
+                              title: "Khám phá nổi bật",
+                              icon: Icons.auto_awesome_rounded,
+                              child: const FeatureGridWidget(),
+                              isWeb: isWeb,
                             ),
                           ),
-                        ),
-                      ),
 
-                      const SizedBox(height: 100),
-                    ],
+                          SizedBox(height: isWeb ? 48 : 32),
+
+                          // Quick Categories
+                          _AnimatedSection(
+                            delay: 300,
+                            child: _buildSection(
+                              context,
+                              title: "Danh mục nhanh",
+                              icon: Icons.apps_rounded,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(24),
+                                  color: Colors.white,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: oceanBlue.withOpacity(0.08),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 8),
+                                    ),
+                                  ],
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(24),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(20.0),
+                                    child: QuickCategoriesWidget(
+                                      onCategoryTap: (category) {
+                                        HapticFeedback.selectionClick();
+                                        debugPrint("Chọn danh mục: $category");
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              isWeb: isWeb,
+                            ),
+                          ),
+
+                          SizedBox(height: isWeb ? 80 : 100),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ],
@@ -383,37 +613,31 @@ class _HomeContentState extends State<HomeContent> with TickerProviderStateMixin
     );
   }
 
-  Widget _buildPremiumBanner() {
+  Widget _buildPremiumBanner(bool isWeb) {
     return Hero(
       tag: 'promo_banner',
       child: Container(
-        height: 200,
+        height: isWeb ? 280 : 200,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(32),
           boxShadow: [
             BoxShadow(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+              color: oceanBlue.withOpacity(0.2),
               blurRadius: 30,
-              offset: const Offset(0, 10),
-              spreadRadius: 0,
-            ),
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 15,
-              offset: const Offset(0, 5),
+              offset: const Offset(0, 15),
             ),
           ],
         ),
         child: Stack(
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(28),
+              borderRadius: BorderRadius.circular(32),
               child: const PromoBannerWidget(),
             ),
             // Glassmorphism overlay
             Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(28),
+                borderRadius: BorderRadius.circular(32),
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -431,7 +655,7 @@ class _HomeContentState extends State<HomeContent> with TickerProviderStateMixin
                 builder: (context, child) {
                   return Container(
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(28),
+                      borderRadius: BorderRadius.circular(32),
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -458,6 +682,7 @@ class _HomeContentState extends State<HomeContent> with TickerProviderStateMixin
         required String title,
         required IconData icon,
         required Widget child,
+        required bool isWeb,
       }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -465,37 +690,35 @@ class _HomeContentState extends State<HomeContent> with TickerProviderStateMixin
         Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    Theme.of(context).colorScheme.primary,
-                    Theme.of(context).colorScheme.primary.withOpacity(0.7),
-                  ],
+                  colors: [deepOcean, oceanBlue, lightOcean],
                 ),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-                    blurRadius: 8,
+                    color: oceanBlue.withOpacity(0.3),
+                    blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
                 ],
               ),
-              child: Icon(icon, color: Colors.white, size: 20),
+              child: Icon(icon, color: Colors.white, size: 24),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 16),
             Text(
               title,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w800,
+              style: TextStyle(
+                fontSize: isWeb ? 28 : 22,
+                fontWeight: FontWeight.w900,
                 color: const Color(0xFF1A1A1A),
                 letterSpacing: -0.5,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: isWeb ? 24 : 20),
         child,
       ],
     );
@@ -547,7 +770,7 @@ class _AnimatedSectionState extends State<_AnimatedSection>
       ),
     );
 
-    _scaleAnimation = Tween<double>(begin: 0.9, end: 1.0).animate(
+    _scaleAnimation = Tween<double>(begin: 0.95, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
         curve: const Interval(0.0, 0.8, curve: Curves.easeOutCubic),

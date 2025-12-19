@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'customer_support_dashboard_page.dart';
 import 'home_page.dart';
 import 'login_page.dart';
 import 'register_page.dart';
@@ -29,6 +30,7 @@ class VietLuTravelApp extends StatelessWidget {
         "/reset-password":  (_) => const ResetPasswordPage(),
         "/home":            (_) => const HomePage(),
         "/admin":           (_) => const AdminDashboardPage(),
+        "/staff":           (_) => const CustomerSupportDashboardPage(),
       },
       debugShowCheckedModeBanner: false,
     );

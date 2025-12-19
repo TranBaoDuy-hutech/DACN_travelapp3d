@@ -41,9 +41,8 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
   Future<void> cancelBooking(BuildContext context, int bookingID) async {
     setState(() => _isCancelling = true);
     try {
-      // Lưu ý: backend dùng POST /booking/{id}/cancel
       final response = await http.delete(
-        Uri.parse("http://10.0.2.2:8000/booking/${widget.booking['bookingID']}"),
+        Uri.parse("http://127.0.0.1:8000/booking/${widget.booking['bookingID']}"),
       );
 
 

@@ -22,7 +22,7 @@ class _CustomerManagementPageState extends State<CustomerManagementPage> {
   Future<void> fetchCustomers() async {
     setState(() => isLoading = true);
     try {
-      final response = await http.get(Uri.parse('http://10.0.2.2:8000/admin/customers'));
+      final response = await http.get(Uri.parse('http://127.0.0.1:8000/admin/customers'));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
@@ -40,7 +40,7 @@ class _CustomerManagementPageState extends State<CustomerManagementPage> {
 
   Future<void> deleteCustomer(int customerId) async {
     try {
-      final response = await http.delete(Uri.parse('http://10.0.2.2:8000/admin/customers/$customerId'));
+      final response = await http.delete(Uri.parse('http://127.0.0.1:8000/admin/customers/$customerId'));
       if (response.statusCode == 200) {
         fetchCustomers();
       } else {
@@ -86,13 +86,13 @@ class _CustomerManagementPageState extends State<CustomerManagementPage> {
               try {
                 if (customer == null) {
                   await http.post(
-                    Uri.parse('http://10.0.2.2:8000/admin/customers'),
+                    Uri.parse('http://127.0.0.1:8000/admin/customers'),
                     headers: {"Content-Type": "application/json"},
                     body: json.encode(customerData),
                   );
                 } else {
                   await http.put(
-                    Uri.parse('http://10.0.2.2:8000/admin/customers/${customer['CustomerID']}'),
+                    Uri.parse('http://127.0.0.1:8000/admin/customers/${customer['CustomerID']}'),
                     headers: {"Content-Type": "application/json"},
                     body: json.encode(customerData),
                   );

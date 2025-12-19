@@ -22,7 +22,7 @@ class _GuideToursPageState extends State<GuideToursPage> {
 
   Future<void> fetchGuideTours() async {
     try {
-      final res = await http.get(Uri.parse("http://10.0.2.2:8000/guide/${widget.guideId}/tours"));
+      final res = await http.get(Uri.parse("http://127.0.0.1/guide/${widget.guideId}/tours"));
       if (res.statusCode == 200) {
         setState(() {
           tours = jsonDecode(res.body);

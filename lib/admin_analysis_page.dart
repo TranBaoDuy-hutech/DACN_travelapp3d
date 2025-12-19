@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:syncfusion_flutter_charts/charts.dart';
 
 class AdminAnalysisPage extends StatefulWidget {
-  final int? customerId; // phân tích theo khách
+  final int? customerId;
 
   const AdminAnalysisPage({super.key, this.customerId});
 
@@ -13,7 +13,7 @@ class AdminAnalysisPage extends StatefulWidget {
 }
 
 class _AdminAnalysisPageState extends State<AdminAnalysisPage> {
-  static const String baseUrl = "http://10.0.2.2:8000";
+  static const String baseUrl = "http:/127.0.0.1:8000";
 
   Map<String, double> sentiment = {};
   Map<String, double> category = {};

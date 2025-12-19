@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'dart:math' as math;
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'globals.dart' as globals;
 import 'customer.dart';
 import 'login_page.dart';
@@ -19,6 +20,7 @@ class _AccountPageState extends State<AccountPage> with TickerProviderStateMixin
   File? _avatarFile;
   late AnimationController _floatingController;
   late AnimationController _fadeController;
+  bool _isRefreshingBookings = false;
 
   @override
   void initState() {
@@ -27,11 +29,11 @@ class _AccountPageState extends State<AccountPage> with TickerProviderStateMixin
       duration: const Duration(seconds: 3),
       vsync: this,
     )..repeat(reverse: true);
-
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     )..forward();
+    _refreshBookingsCount();
   }
 
   @override
@@ -41,12 +43,48 @@ class _AccountPageState extends State<AccountPage> with TickerProviderStateMixin
     super.dispose();
   }
 
+  // Hàm lấy dữ liệu bookings từ server và cập nhật globals + UI
+  Future<void> _refreshBookingsCount() async {
+    final customer = globals.currentCustomer;
+    if (customer == null || !mounted) return;
+
+    setState(() {
+      _isRefreshingBookings = true;
+    });
+
+    try {
+      final response = await http.get(
+        Uri.parse("http://127.0.0.1:8000/bookings/${customer.customerID}"),
+      );
+
+      if (response.statusCode == 200 && mounted) {
+        final data = json.decode(response.body);
+        final List<dynamic> fetchedBookings = data is List ? data : [data];
+
+        setState(() {
+          globals.myBookings = fetchedBookings;
+          _isRefreshingBookings = false;
+        });
+      } else if (mounted) {
+        setState(() {
+          _isRefreshingBookings = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isRefreshingBookings = false;
+        });
+      }
+      debugPrint("Lỗi khi cập nhật số lượng tour: $e");
+    }
+  }
+
   Future<void> _pickAvatar() async {
     HapticFeedback.mediumImpact();
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery);
-
-    if (picked != null) {
+    if (picked != null && mounted) {
       setState(() {
         _avatarFile = File(picked.path);
       });
@@ -79,10 +117,22 @@ class _AccountPageState extends State<AccountPage> with TickerProviderStateMixin
     );
   }
 
+  // Chuyển sang MyBookings và tự động refresh khi quay lại
+  void _goToMyBookings() {
+    HapticFeedback.mediumImpact();
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const MyBookingsPage()),
+    ).then((_) {
+      if (mounted) {
+        _refreshBookingsCount(); // Cập nhật lại nếu có thay đổi trong MyBookings
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final Customer? customer = globals.currentCustomer;
-
     if (customer == null) {
       return _buildLoginPrompt();
     }
@@ -91,9 +141,7 @@ class _AccountPageState extends State<AccountPage> with TickerProviderStateMixin
       backgroundColor: const Color(0xFFF8F9FA),
       body: Stack(
         children: [
-          // Animated background
           _buildAnimatedBackground(),
-          // Main content
           CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
@@ -128,6 +176,37 @@ class _AccountPageState extends State<AccountPage> with TickerProviderStateMixin
               ),
             ],
           ),
+          // Loading nhỏ khi đang refresh bookings (không làm gián đoạn UI)
+          if (_isRefreshingBookings)
+            Positioned(
+              top: 100,
+              right: 20,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.6),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      "Đang cập nhật...",
+                      style: TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -250,27 +329,22 @@ class _AccountPageState extends State<AccountPage> with TickerProviderStateMixin
         background: Stack(
           fit: StackFit.expand,
           children: [
-            // Ảnh nền
             Image.asset(
-              "assets/nen2.png", // thay bằng ảnh của bạn
+              "assets/nen2.png",
               fit: BoxFit.cover,
             ),
-
-            // Overlay gradient xanh biển
             Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Color(0xAA00B4DB), // xanh nhạt có alpha
-                    Color(0xCC0083B0), // xanh đậm có alpha
+                    Color(0xAA00B4DB),
+                    Color(0xCC0083B0),
                   ],
                 ),
               ),
             ),
-
-            // Nội dung avatar + tên + email
             SafeArea(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -318,7 +392,6 @@ class _AccountPageState extends State<AccountPage> with TickerProviderStateMixin
       ),
     );
   }
-
 
   Widget _buildAvatar() {
     return GestureDetector(
@@ -375,9 +448,9 @@ class _AccountPageState extends State<AccountPage> with TickerProviderStateMixin
   }
 
   Widget _buildStatsCards() {
-    int daDat = globals.myBookings.length; // lấy số tour đã đặt thật
-    int yeuThich = 8;   // set cứng
-    int diem = 450;     // set cứng
+    int daDat = globals.myBookings.length;
+    int yeuThich = 8;
+    int diem = 450;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -392,7 +465,6 @@ class _AccountPageState extends State<AccountPage> with TickerProviderStateMixin
       ),
     );
   }
-
 
   Widget _buildStatCard(IconData icon, String label, String value, Color color) {
     return Container(
@@ -558,15 +630,7 @@ class _AccountPageState extends State<AccountPage> with TickerProviderStateMixin
       child: Column(
         children: [
           _buildPremiumButton(
-            onPressed: () {
-              HapticFeedback.mediumImpact();
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const MyBookingsPage()),
-              ).then((_) {
-                setState(() {});
-              });
-            },
+            onPressed: _goToMyBookings,
             icon: Icons.history_rounded,
             label: "Lịch sử đặt tour",
             gradient: LinearGradient(
@@ -720,7 +784,6 @@ class _AccountPageState extends State<AccountPage> with TickerProviderStateMixin
                     ),
                   ),
                 ),
-
               ],
             ),
           ],
