@@ -17,3 +17,11 @@ Trong bối cảnh công nghệ di động và công nghệ 3D phát triển m�
 •	Tích hợp bản đồ định vị để người dùng dễ dàng tìm kiếm địa điểm.
 
 •	Giúp sinh viên rèn luyện kỹ năng lập trình đa nền tảng, tích hợp thư viện, thiết kế UI/UX, quản lý dự án và viết báo cáo.
+
+Thanks & Regards,
+------------------------------------------------
+Tran Bao Duy
+
+Phone: 0329810650
+
+Site: https://tranbaoduy.netlify.app/
