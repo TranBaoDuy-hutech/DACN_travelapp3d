@@ -10,7 +10,7 @@ Trong bối cảnh công nghệ di động và công nghệ 3D phát triển m�
 
 •	Làm sao để người dùng có thể trải nghiệm 3D, từ đó kích thích nhu cầu du lịch thực tế?
 # MỤC TIÊU:
-•	Xây dựng ứng dụng di động bằng Flutter, hỗ trợ chạy trên cả Android và iOS.
+•	Xây dựng ứng dụng di động bằng Flutter, hỗ trợ chạy trên cả Android/ iOS/ Website.
 
 •	Tích hợp công nghệ 3D (mô hình, ảnh 360 độ) để tăng tính trực quan.
 
