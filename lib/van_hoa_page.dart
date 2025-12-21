@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -12,33 +13,64 @@ class VanHoaPage extends StatefulWidget {
 
 class _VanHoaPageState extends State<VanHoaPage> {
   List<dynamic> vanHoaList = [];
+  List<dynamic> _filteredVanHoa = [];
   bool isLoading = true;
+  String? errorMessage;
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
     fetchVanHoa();
+    _searchController.addListener(_onSearchChangedDebounced);
+  }
+
+  void _onSearchChangedDebounced() {
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () {
+      final query = _searchController.text.toLowerCase().trim();
+      setState(() {
+        _filteredVanHoa = vanHoaList.where((item) {
+          final title = (item['tieuDe'] ?? '').toLowerCase();
+          return title.contains(query);
+        }).toList();
+      });
+    });
   }
 
   Future<void> fetchVanHoa() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+
     try {
-      final res = await http.get(Uri.parse("http://127.0.0.1:8000/vanhoaw"));
+      final res = await http
+          .get(Uri.parse("http://127.0.0.1:8000/vanhoaw"))
+          .timeout(const Duration(seconds: 15));
+
       if (res.statusCode == 200) {
         final jsonData = json.decode(res.body);
         setState(() {
           vanHoaList = jsonData["data"] ?? [];
+          _filteredVanHoa = vanHoaList;
           isLoading = false;
         });
       } else {
-        setState(() => isLoading = false);
+        setState(() {
+          isLoading = false;
+          errorMessage = 'Lỗi tải dữ liệu (mã: ${res.statusCode})';
+        });
       }
     } catch (e) {
-      debugPrint("Lỗi tải dữ liệu: $e");
-      setState(() => isLoading = false);
+      setState(() {
+        isLoading = false;
+        errorMessage = 'Không thể kết nối: $e';
+      });
     }
   }
 
-  // Widget card riêng để tái sử dụng
   Widget buildVanHoaCard(dynamic item, bool isDesktop, bool isTablet) {
     bool isHovered = false;
 
@@ -63,127 +95,135 @@ class _VanHoaPageState extends State<VanHoaPage> {
               transform: Matrix4.identity()..scale(isHovered ? 1.05 : 1.0),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Colors.grey.shade900, Colors.black],
+                  colors: [Colors.grey.shade900, Colors.black87],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
-                  color: Colors.greenAccent.shade700.withOpacity(0.3),
-                  width: 2,
+                  color: Colors.greenAccent.shade700.withOpacity(0.4),
+                  width: 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
                     color: isHovered
-                        ? Colors.greenAccent.withOpacity(0.4)
-                        : Colors.greenAccent.withOpacity(0.2),
-                    blurRadius: isHovered ? 30 : 20,
-                    offset: const Offset(0, 8),
+                        ? Colors.greenAccent.withOpacity(0.5)
+                        : Colors.greenAccent.withOpacity(0.25),
+                    blurRadius: isHovered ? 35 : 20,
+                    spreadRadius: isHovered ? 5 : 0,
+                    offset: const Offset(0, 10),
                   ),
                 ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                    child: Image.network(
-                      item['hinhAnh'],
-                      width: double.infinity,
-                      height: isDesktop ? 280 : (isTablet ? 240 : 220),
-                      fit: BoxFit.cover,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Container(
-                          height: isDesktop ? 280 : (isTablet ? 240 : 220),
-                          color: Colors.grey[800],
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              color: Colors.greenAccent.shade400,
-                              strokeWidth: 2,
+                  // Hình ảnh
+                  Expanded(
+                    flex: 5,
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                      child: Image.network(
+                        item['hinhAnh'] ?? 'https://via.placeholder.com/400x300/111/eee?text=Loading',
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            color: Colors.grey[850],
+                            child: const Center(
+                              child: CircularProgressIndicator(
+                                color: Colors.greenAccent,
+                                strokeWidth: 2,
+                              ),
                             ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: Colors.grey[850],
+                          child: const Center(
+                            child: Icon(Icons.broken_image, size: 60, color: Colors.grey),
                           ),
-                        );
-                      },
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        height: isDesktop ? 280 : (isTablet ? 240 : 220),
-                        color: Colors.grey[800],
-                        child: const Icon(Icons.image_not_supported, size: 60, color: Colors.white),
+                        ),
                       ),
                     ),
                   ),
-                  Padding(
-                    padding: EdgeInsets.all(isDesktop ? 24 : 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: EdgeInsets.all(isDesktop ? 12 : 10),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [Colors.greenAccent.shade400, Colors.green.shade700],
-                                ),
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.greenAccent.withOpacity(0.3),
-                                    blurRadius: 8,
-                                    spreadRadius: 1,
+                  // Thông tin
+                  Expanded(
+                    flex: 3,
+                    child: Padding(
+                      padding: EdgeInsets.all(isDesktop ? 20 : 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [Colors.greenAccent.shade400, Colors.green.shade700],
                                   ),
-                                ],
-                              ),
-                              child: Icon(
-                                Icons.account_balance,
-                                color: Colors.white,
-                                size: isDesktop ? 26 : 22,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                item['tieuDe'],
-                                style: TextStyle(
-                                  fontSize: isDesktop ? 24 : 22,
-                                  fontWeight: FontWeight.w800,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.greenAccent.withOpacity(0.4),
+                                      blurRadius: 10,
+                                      spreadRadius: 1,
+                                    ),
+                                  ],
+                                ),
+                                child: const Icon(
+                                  Icons.account_balance,
                                   color: Colors.white,
-                                  letterSpacing: 0.5,
+                                  size: 24,
                                 ),
                               ),
-                            ),
-                            Icon(
-                              Icons.arrow_forward_ios,
-                              color: Colors.greenAccent.shade400,
-                              size: isDesktop ? 22 : 20,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Container(
-                          height: 1.5,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.greenAccent.shade700.withOpacity(0.5),
-                                Colors.transparent,
-                              ],
-                            ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Text(
+                                  item['tieuDe'] ?? 'Không có tiêu đề',
+                                  style: TextStyle(
+                                    fontSize: isDesktop ? 24 : 20,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                    letterSpacing: 0.5,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              Icon(
+                                Icons.arrow_forward_ios,
+                                color: Colors.greenAccent.shade400,
+                                size: isDesktop ? 22 : 18,
+                              ),
+                            ],
                           ),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          item['moTa'],
-                          maxLines: isDesktop ? 4 : 3,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: isDesktop ? 16 : 15,
-                            color: Colors.grey.shade300,
+                          const SizedBox(height: 12),
+                          Container(
                             height: 1.5,
-                            letterSpacing: 0.3,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [Colors.greenAccent.shade700.withOpacity(0.6), Colors.transparent],
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 12),
+                          Expanded(
+                            child: Text(
+                              item['moTa'] ?? 'Không có mô tả',
+                              maxLines: isDesktop ? 5 : (isTablet ? 4 : 3),
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: isDesktop ? 15 : 14,
+                                color: Colors.grey.shade300,
+                                height: 1.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -197,113 +237,172 @@ class _VanHoaPageState extends State<VanHoaPage> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final isDesktop = size.width > 1200;      // 3 cột
-    final isTablet = size.width > 600 && size.width <= 1200; // 2 cột
-    final crossAxisCount = isDesktop ? 3 : (isTablet ? 2 : 1);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final isDesktop = width > 1200;
+        final isTablet = width > 768 && width <= 1200;
+        final crossAxisCount = isDesktop ? 3 : (isTablet ? 2 : 1);
+        final paddingHorizontal = isDesktop ? 80.0 : (isTablet ? 32.0 : 16.0);
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.account_balance, color: Colors.greenAccent.shade400, size: 28),
-            const SizedBox(width: 8),
-            const Text(
-              'Văn Hóa An Giang',
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 22, color: Colors.tealAccent),
-            ),
-          ],
-        ),
-        backgroundColor: Colors.black.withOpacity(0.3),
-        centerTitle: true,
-        elevation: 0,
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Colors.green.shade900.withOpacity(0.8),
-                Colors.black.withOpacity(0.6),
-              ],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-          ),
-        ),
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.black, Colors.green.shade900, Colors.black],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            stops: const [0.0, 0.5, 1.0],
-          ),
-        ),
-        child: SafeArea(
-          child: isLoading
-              ? Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+        return Scaffold(
+          backgroundColor: Colors.black,
+          extendBodyBehindAppBar: true,
+          appBar: AppBar(
+            title: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                CircularProgressIndicator(
-                  color: Colors.greenAccent.shade400,
-                  strokeWidth: 3,
-                ),
-                const SizedBox(height: 20),
+                Icon(Icons.account_balance, color: Colors.greenAccent.shade400, size: 28),
+                const SizedBox(width: 10),
                 const Text(
-                  'Đang tải văn hóa...',
-                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                  'Văn Hóa An Giang',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 24,
+                    letterSpacing: 1.5,
+                    color: Colors.tealAccent,
+                  ),
                 ),
               ],
             ),
-          )
-              : vanHoaList.isEmpty
-              ? Center(
-            child: Container(
-              margin: const EdgeInsets.all(24),
-              padding: const EdgeInsets.all(32),
+            backgroundColor: Colors.black.withOpacity(0.4),
+            elevation: 0,
+            centerTitle: true,
+            flexibleSpace: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Colors.grey.shade800.withOpacity(0.8), Colors.black.withOpacity(0.8)],
+                  colors: [Colors.green.shade900.withOpacity(0.8), Colors.black.withOpacity(0.5)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
                 ),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.grey.shade700, width: 2),
               ),
+            ),
+          ),
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.black, Colors.green.shade900, Colors.black],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                stops: const [0.0, 0.5, 1.0],
+              ),
+            ),
+            child: SafeArea(
               child: Column(
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.info_outline, color: Colors.grey.shade400, size: 64),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Không có dữ liệu văn hóa',
-                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
+                  // Thanh tìm kiếm (giống DacSan)
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: paddingHorizontal,
+                      vertical: 16,
+                    ),
+                    child: TextField(
+                      controller: _searchController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: 'Tìm kiếm văn hóa...',
+                        hintStyle: TextStyle(color: Colors.grey.shade500),
+                        prefixIcon: Icon(Icons.search, color: Colors.greenAccent.shade400),
+                        filled: true,
+                        fillColor: Colors.grey.shade900.withOpacity(0.6),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                    ),
+                  ),
+
+                  // Nội dung chính
+                  Expanded(
+                    child: isLoading
+                        ? const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(
+                            color: Colors.greenAccent,
+                            strokeWidth: 4,
+                          ),
+                          SizedBox(height: 20),
+                          Text(
+                            'Đang tải văn hóa...',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                        : errorMessage != null
+                        ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.error_outline, color: Colors.red.shade300, size: 60),
+                          const SizedBox(height: 16),
+                          Text(
+                            errorMessage!,
+                            style: TextStyle(color: Colors.red.shade300, fontSize: 18),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 24),
+                          ElevatedButton.icon(
+                            onPressed: fetchVanHoa,
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Thử lại'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.greenAccent.shade700,
+                              foregroundColor: Colors.black,
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                        : _filteredVanHoa.isEmpty
+                        ? Center(
+                      child: Text(
+                        _searchController.text.isEmpty
+                            ? 'Chưa có dữ liệu văn hóa'
+                            : 'Không tìm thấy kết quả phù hợp',
+                        style: TextStyle(color: Colors.grey.shade400, fontSize: 18),
+                      ),
+                    )
+                        : GridView.builder(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: paddingHorizontal,
+                        vertical: 16,
+                      ),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        childAspectRatio: isDesktop ? 0.82 : (isTablet ? 0.78 : 0.72),
+                        crossAxisSpacing: 28,
+                        mainAxisSpacing: 32,
+                      ),
+                      itemCount: _filteredVanHoa.length,
+                      itemBuilder: (context, index) {
+                        final item = _filteredVanHoa[index];
+                        return buildVanHoaCard(item, isDesktop, isTablet);
+                      },
+                    ),
                   ),
                 ],
               ),
             ),
-          )
-              : GridView.builder(
-            padding: EdgeInsets.symmetric(
-              horizontal: isDesktop ? size.width * 0.1 : (isTablet ? 24 : 16),
-              vertical: 24,
-            ),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: crossAxisCount,
-              childAspectRatio: isDesktop ? 0.85 : (isTablet ? 0.8 : 0.75),
-              crossAxisSpacing: 24,
-              mainAxisSpacing: 32,
-            ),
-            itemCount: vanHoaList.length,
-            itemBuilder: (context, index) {
-              final item = vanHoaList[index];
-              return buildVanHoaCard(item, isDesktop, isTablet);
-            },
           ),
-        ),
-      ),
+        );
+      },
     );
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
   }
 }
