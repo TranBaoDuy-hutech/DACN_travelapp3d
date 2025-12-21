@@ -10,10 +10,18 @@ Trong bối cảnh công nghệ di động và công nghệ 3D phát triển m�
 
 •	Làm sao để người dùng có thể trải nghiệm 3D, từ đó kích thích nhu cầu du lịch thực tế?
 # MỤC TIÊU:
-•	Xây dựng ứng dụng di động bằng Flutter, hỗ trợ chạy trên cả Android và iOS.
+•	Xây dựng ứng dụng di động bằng Flutter, hỗ trợ chạy trên cả Android/ iOS/ Website.
 
 •	Tích hợp công nghệ 3D (mô hình, ảnh 360 độ) để tăng tính trực quan.
 
 •	Tích hợp bản đồ định vị để người dùng dễ dàng tìm kiếm địa điểm.
 
 •	Giúp sinh viên rèn luyện kỹ năng lập trình đa nền tảng, tích hợp thư viện, thiết kế UI/UX, quản lý dự án và viết báo cáo.
+
+Thanks & Regards,
+------------------------------------------------
+Tran Bao Duy
+
+Phone: 0329810650
+
+Site: https://tranbaoduy.netlify.app/
